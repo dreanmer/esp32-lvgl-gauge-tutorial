@@ -21,7 +21,7 @@
 // Instância do display
 Adafruit_GC9A01A tft(TFT_CS, TFT_DC, TFT_RST);
 
-static lv_color_t draw_buf[TFT_HOR_RES * TFT_VER_RES];
+static lv_color_t draw_buf[TFT_HOR_RES * TFT_VER_RES / 4];
 
 #if LV_USE_LOG != 0
 void my_print(lv_log_level_t level, const char* buf)
@@ -187,13 +187,14 @@ void update_fps()
 void loop()
 {
     const int pot_val = analogRead(POT_PIN);
-    const int pot_val_average = moving_average(pot_val);
-    const int pot_percent_val = map(pot_val_average, 10, 3350, 100, 0);
+    // const int pot_val_average = moving_average(pot_val); // use to smooth the increase
+    const int pot_percent_val = constrain(map(pot_val, 20, 3340, 100, 0), 0, 100);
 
     update_label(pot_percent_val);
     update_arc(pot_percent_val);
-    update_fps();
 
     lv_timer_handler();
+
+    update_fps();
     delay(2);
 }
