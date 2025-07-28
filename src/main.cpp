@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <lvgl.h>
-#include <Adafruit_GFX.h>
 #include <Adafruit_GC9A01A.h>
 #include <ui/ui.h>
 
@@ -101,22 +100,40 @@ void setup()
     Serial.println("Setup done");
 }
 
-const int num_readings = 30;
+const int num_readings = 10;
 int previous_values[num_readings] = {};
 int i = 0;
 
-int moving_average(const int new_value)
+int stabilize_pot_reading(const int new_value, const int hysteresis)
 {
-    previous_values[i] = new_value;
-    i = (i + 1) % num_readings;
-    int sum = 0;
-    for (const int previous_value : previous_values)
+    static int last_stable_value = 0;
+    static bool first_call = true;
+
+    if (first_call)
     {
-        sum += previous_value;
+        last_stable_value = new_value;
+        first_call = false;
+        return new_value;
     }
 
-    return sum / num_readings;
+    previous_values[i] = new_value;
+    i = (i + 1) % num_readings;
+
+    long sum = 0;
+    for (const int val : previous_values)
+    {
+        sum += val;
+    }
+    int avg = sum / num_readings;
+
+    if (abs(avg - last_stable_value) > hysteresis)
+    {
+        last_stable_value = avg;
+    }
+
+    return last_stable_value;
 }
+
 
 double fps = 0;
 unsigned long last_fps_update = 0;
@@ -187,8 +204,8 @@ void update_fps()
 void loop()
 {
     const int pot_val = analogRead(POT_PIN);
-    // const int pot_val_average = moving_average(pot_val); // use to smooth the increase
-    const int pot_percent_val = constrain(map(pot_val, 20, 3340, 100, 0), 0, 100);
+    const int pot_val_average = stabilize_pot_reading(pot_val, 15);
+    const int pot_percent_val = constrain(map(pot_val_average, 30, 3340, 100, 0), 0, 100);
 
     update_label(pot_percent_val);
     update_arc(pot_percent_val);
