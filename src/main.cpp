@@ -21,7 +21,7 @@
 // Instância do display
 Adafruit_GC9A01A tft(TFT_CS, TFT_DC, TFT_RST);
 
-static lv_color_t draw_buf[TFT_HOR_RES * TFT_VER_RES / 10];
+static lv_color_t draw_buf[TFT_HOR_RES * TFT_VER_RES];
 
 #if LV_USE_LOG != 0
 void my_print(lv_log_level_t level, const char* buf)
@@ -137,37 +137,51 @@ double current_fps()
     return fps;
 }
 
-int previous_color_state = -1;
-void update_arc_color(int percent_value) {
-    // Só atualiza a cor se houve mudança
-    if (current_color_state != previous_color_state) {
-        if (current_color_state == 1) {
-            lv_obj_set_style_arc_color(ui_Arc1, lv_color_make(255, 0, 0), LV_PART_INDICATOR);
-        } else if (current_color_state == 2) {
-            lv_obj_set_style_arc_color(ui_Arc1, lv_color_make(0, 255, 0), LV_PART_INDICATOR);
-        } else {
-            lv_obj_set_style_arc_color(ui_Arc1, lv_color_make(0, 0, 255), LV_PART_INDICATOR);
-        }
-        previous_color_state = current_color_state;
+lv_color_t previous_color = lv_color_make(255, 0, 0);
+
+void update_arc_color(const lv_color_t color)
+{
+    if (!lv_color_eq(color, previous_color))
+    {
+        lv_obj_set_style_arc_color(ui_Arc1, color, LV_PART_INDICATOR);
+        previous_color = color;
     }
 }
 
-void update_arc(int percent_value) {
-
+void update_arc(int percent_value)
+{
     lv_arc_set_value(ui_Arc1, percent_value);
 
-    int current_color_state;
+    lv_color_t color;
 
-    if (percent_value < 20) {
-        current_color_state = 1; // vermelho
-    } else if (percent_value > 80) {
-        current_color_state = 2; // verde
-    } else {
-        current_color_state = 0; // azul (padrão)
+    if (percent_value < 20)
+    {
+        color = lv_color_make(255, 0, 0);
+    }
+    else if (percent_value > 80)
+    {
+        color = lv_color_make(0, 255, 0);
+    }
+    else
+    {
+        color = lv_color_make(0, 0, 255);
     }
 
-    // Atualiza a cor do arco
-    update_arc_color(percent_value);
+    update_arc_color(color);
+}
+
+void update_label(int percent_value)
+{
+    char buffer[16];
+    sprintf(buffer, "%d%%", percent_value);
+    lv_label_set_text(ui_Label1, buffer);
+}
+
+void update_fps()
+{
+    char buffer[16];
+    sprintf(buffer, "FPS: %.1f", current_fps());
+    lv_label_set_text(ui_Label2, buffer);
 }
 
 void loop()
@@ -176,33 +190,9 @@ void loop()
     const int pot_val_average = moving_average(pot_val);
     const int pot_percent_val = map(pot_val_average, 10, 3350, 100, 0);
 
-    char buffer[16];
-    sprintf(buffer, "%d%%", pot_percent_val);
-    lv_label_set_text(ui_Label1, buffer);
-
-    int current_color_state;
-    if (pot_percent_val < 20) {
-        current_color_state = 1;
-    } else if (pot_percent_val > 80) {
-        current_color_state = 2;
-    } else {
-        current_color_state = 0;
-    }
-
-    lv_arc_set_value(ui_Arc1, pot_percent_val);
-    if (current_color_state != previous_color_state) {
-        if (current_color_state == 1) {
-            lv_obj_set_style_arc_color(ui_Arc1, lv_color_make(255, 0, 0), LV_PART_INDICATOR);
-        } else if (current_color_state == 2) {
-            lv_obj_set_style_arc_color(ui_Arc1, lv_color_make(0, 255, 0), LV_PART_INDICATOR);
-        } else {
-            lv_obj_set_style_arc_color(ui_Arc1, lv_color_make(0, 0, 255), LV_PART_INDICATOR);
-        }
-        previous_color_state = current_color_state;
-    }
-
-    sprintf(buffer, "FPS: %.1f", current_fps());
-    lv_label_set_text(ui_Label2, buffer);
+    update_label(pot_percent_val);
+    update_arc(pot_percent_val);
+    update_fps();
 
     lv_timer_handler();
     delay(2);
