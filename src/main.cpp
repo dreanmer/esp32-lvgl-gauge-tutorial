@@ -100,7 +100,7 @@ void setup()
     Serial.println("Setup done");
 }
 
-const int num_readings = 10;
+const int num_readings = 5;
 int previous_values[num_readings] = {};
 int i = 0;
 
@@ -167,23 +167,15 @@ void update_arc_color(const lv_color_t color)
 
 void update_arc(int percent_value)
 {
+    percent_value = std::max(0, std::min(100, percent_value));
+
+    int rounded_percent = ((percent_value + 2) / 5) * 5;
+    uint16_t hue = 240 - (rounded_percent * 240 / 100);
+    uint8_t saturation = 100;
+    uint8_t value = 100;
+    lv_color_t color = lv_color_hsv_to_rgb(hue, saturation, value);
+
     lv_arc_set_value(ui_Arc1, percent_value);
-
-    lv_color_t color;
-
-    if (percent_value < 20)
-    {
-        color = lv_color_make(255, 0, 0);
-    }
-    else if (percent_value > 80)
-    {
-        color = lv_color_make(0, 255, 0);
-    }
-    else
-    {
-        color = lv_color_make(0, 0, 255);
-    }
-
     update_arc_color(color);
 }
 
@@ -204,8 +196,8 @@ void update_fps()
 void loop()
 {
     const int pot_val = analogRead(POT_PIN);
-    const int pot_val_average = stabilize_pot_reading(pot_val, 15);
-    const int pot_percent_val = constrain(map(pot_val_average, 30, 3340, 100, 0), 0, 100);
+    const int pot_val_average = stabilize_pot_reading(pot_val, 10);
+    const int pot_percent_val = constrain(map(pot_val_average, 60, 3300, 100, 0), 0, 100);
 
     update_label(pot_percent_val);
     update_arc(pot_percent_val);
