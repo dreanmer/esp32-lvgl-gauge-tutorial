@@ -3,3 +3,7 @@
 CLion [download here](https://www.jetbrains.com/clion/) + PlatformIo plugin to edit and compile and upload the code to esp32.
 
 SquareLine Studio to edit ui [download here](https://squareline.io/downloads). The SquareLine project is in `/etc/squareline_studio` folder.
+
+![img.png](etc/readme_assets/xiao_esp32-c6_GC9A01.png)
+
+![img.png](etc/readme_assets/squareline_studio_screenshot.png)
