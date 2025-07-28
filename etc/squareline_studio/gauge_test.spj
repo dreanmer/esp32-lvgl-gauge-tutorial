@@ -130,7 +130,7 @@
               {
                 "nid": 1030,
                 "strtype": "LABEL/Text",
-                "strval": "0",
+                "strval": "50%",
                 "InheritedType": 10
               },
               {
@@ -282,7 +282,7 @@
               {
                 "nid": 1030,
                 "strtype": "LABEL/Text",
-                "strval": "100",
+                "strval": "FPS: 150",
                 "InheritedType": 10
               },
               {
