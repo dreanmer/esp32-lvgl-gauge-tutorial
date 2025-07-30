@@ -7,17 +7,17 @@
 #define POT_PIN   A0
 
 // Pinos para o XIAO ESP32C6
-#define TFT_DC    9
-#define TFT_CS    7
-#define TFT_RST   6
+#define TFT_DC    D1
+#define TFT_CS    D2
+#define TFT_RST   D3
 
 // Pinos do painel de controle
 
-#define BT_UP      D2
+// #define BT_UP      D2
 #define BT_DN      D5
 #define BT_LT      D4
-#define BT_RT      D1
-#define BT_OK      D3
+#define BT_RT      D9
+// #define BT_OK      D3
 
 /*Set to your screen resolution and rotation*/
 #define TFT_HOR_RES   240
@@ -59,7 +59,8 @@ static uint32_t my_tick(void)
     return millis();
 }
 
-uint8_t button_pins[] = {BT_UP, BT_DN, BT_LT, BT_RT, BT_OK};
+// uint8_t button_pins[] = {BT_UP, BT_DN, BT_LT, BT_RT, BT_OK};
+uint8_t button_pins[] = {BT_DN, BT_LT, BT_RT};
 ButtonManager button_manager(button_pins, std::size(button_pins));
 
 void setup()
@@ -67,15 +68,15 @@ void setup()
     Serial.begin(115200);
     Serial.println("Setup start");
 
-    pinMode(BT_UP, INPUT_PULLUP);
+    tft.begin();
+
+    // pinMode(BT_UP, INPUT_PULLUP);
     pinMode(BT_DN, INPUT_PULLUP);
     pinMode(BT_LT, INPUT_PULLUP);
     pinMode(BT_RT, INPUT_PULLUP);
-    pinMode(BT_OK, INPUT_PULLUP);
+    // pinMode(BT_OK, INPUT_PULLUP);
 
     button_manager.begin(true);
-
-    tft.begin();
 
 #if DEBUG != 0
     tft.setRotation(0);
@@ -220,11 +221,30 @@ void loop()
     const int pot_percent_val = constrain(map(pot_val_average, 60, 3300, 100, 0), 0, 100);
 
     // Verificar todos os botões uma única vez por loop
-    ButtonEvent up_event = button_manager.checkEvent(BT_UP);
+    // ButtonEvent up_event = button_manager.checkEvent(BT_UP);
     ButtonEvent dn_event = button_manager.checkEvent(BT_DN);
     ButtonEvent lt_event = button_manager.checkEvent(BT_LT);
     ButtonEvent rt_event = button_manager.checkEvent(BT_RT);
-    ButtonEvent ok_event = button_manager.checkEvent(BT_OK, 2000);
+    // ButtonEvent ok_event = button_manager.checkEvent(BT_OK, 2000);
+
+    // Handle screen navigation with left and right buttons
+    if (lt_event == BUTTON_CLICK) {
+        // Navigate to previous screen
+        if (lv_screen_active() == ui_Screen2) {
+            lv_screen_load(ui_Screen1);
+        } else if (lv_screen_active() == ui_Screen3) {
+            lv_screen_load(ui_Screen2);
+        }
+    }
+
+    if (rt_event == BUTTON_CLICK) {
+        // Navigate to next screen
+        if (lv_screen_active() == ui_Screen1) {
+            lv_screen_load(ui_Screen2);
+        } else if (lv_screen_active() == ui_Screen2) {
+            lv_screen_load(ui_Screen3);
+        }
+    }
 
     update_label(pot_percent_val);
     update_arc(pot_percent_val);
