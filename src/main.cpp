@@ -59,9 +59,20 @@ static uint32_t my_tick(void)
     return millis();
 }
 
-// uint8_t button_pins[] = {BT_UP, BT_DN, BT_LT, BT_RT, BT_OK};
-uint8_t button_pins[] = {BT_DN, BT_LT, BT_RT};
+uint8_t button_pins[] = {BT_UP, BT_DN, BT_LT, BT_RT, BT_OK};
 ButtonManager button_manager(button_pins, std::size(button_pins));
+
+std::array<lv_obj_t*, 3> screen2_switches = {nullptr, nullptr, nullptr};
+int current_switch_index = 0;
+
+// Esta função deve ser chamada depois que a tela for inicializada
+void initialize_screen2_switches()
+{
+    // Associe os ponteiros já existentes ao array
+    screen2_switches[0] = ui_Switch1;
+    screen2_switches[1] = ui_Switch2;
+    screen2_switches[2] = ui_Switch3;
+}
 
 void setup()
 {
@@ -71,11 +82,11 @@ void setup()
     tft.begin();
     tft.setRotation(TFT_ROTATION);
 
-    // pinMode(BT_UP, INPUT_PULLUP);
+    pinMode(BT_UP, INPUT_PULLUP);
     pinMode(BT_DN, INPUT_PULLUP);
     pinMode(BT_LT, INPUT_PULLUP);
     pinMode(BT_RT, INPUT_PULLUP);
-    // pinMode(BT_OK, INPUT_PULLUP);
+    pinMode(BT_OK, INPUT_PULLUP);
 
     button_manager.begin(true);
 
@@ -117,6 +128,7 @@ void setup()
     pinMode(POT_PIN, INPUT);
 
     ui_init();
+    initialize_screen2_switches();
 
     Serial.println("Setup done");
 }
@@ -130,8 +142,7 @@ int stabilize_pot_reading(const int new_value, const int hysteresis)
     static int last_stable_value = 0;
     static bool first_call = true;
 
-    if (first_call)
-    {
+    if (first_call) {
         last_stable_value = new_value;
         first_call = false;
         return new_value;
@@ -141,14 +152,12 @@ int stabilize_pot_reading(const int new_value, const int hysteresis)
     i = (i + 1) % num_readings;
 
     long sum = 0;
-    for (const int val : previous_values)
-    {
+    for (const int val : previous_values) {
         sum += val;
     }
     int avg = sum / num_readings;
 
-    if (abs(avg - last_stable_value) > hysteresis)
-    {
+    if (abs(avg - last_stable_value) > hysteresis) {
         last_stable_value = avg;
     }
 
@@ -165,8 +174,7 @@ double current_fps()
     frame_count++;
 
     unsigned long current_time = millis();
-    if (current_time - last_fps_update >= 1000)
-    {
+    if (current_time - last_fps_update >= 1000) {
         fps = frame_count * 1000.0 / (current_time - last_fps_update);
         frame_count = 0;
         last_fps_update = current_time;
@@ -179,8 +187,7 @@ lv_color_t previous_color = lv_color_make(255, 0, 0);
 
 void update_arc_color(const lv_color_t color)
 {
-    if (!lv_color_eq(color, previous_color))
-    {
+    if (!lv_color_eq(color, previous_color)) {
         lv_obj_set_style_arc_color(ui_Arc1, color, LV_PART_INDICATOR);
         previous_color = color;
     }
@@ -190,8 +197,7 @@ void update_arc(int percent_value)
 {
     percent_value = std::max(0, std::min(100, percent_value));
 
-    int rounded_percent = ((percent_value + 2) / 5) * 5;
-    uint16_t hue = 240 - (rounded_percent * 240 / 100);
+    uint16_t hue = 240 - (percent_value * 240 / 100);
     uint8_t saturation = 100;
     uint8_t value = 100;
     lv_color_t color = lv_color_hsv_to_rgb(hue, saturation, value);
@@ -221,11 +227,11 @@ void loop()
     const int pot_percent_val = constrain(map(pot_val_average, 60, 3300, 100, 0), 0, 100);
 
     // Verificar todos os botões uma única vez por loop
-    // ButtonEvent up_event = button_manager.checkEvent(BT_UP);
+    ButtonEvent up_event = button_manager.checkEvent(BT_UP);
     ButtonEvent dn_event = button_manager.checkEvent(BT_DN);
     ButtonEvent lt_event = button_manager.checkEvent(BT_LT);
     ButtonEvent rt_event = button_manager.checkEvent(BT_RT);
-    // ButtonEvent ok_event = button_manager.checkEvent(BT_OK, 2000);
+    ButtonEvent ok_event = button_manager.checkEvent(BT_OK, 2000);
 
     // Handle screen navigation with left and right buttons
     if (lt_event == BUTTON_CLICK) {
@@ -246,11 +252,55 @@ void loop()
         }
     }
 
-    if (lv_screen_active() == ui_Screen1)
-    {
+    if (lv_screen_active() == ui_Screen1) {
         update_label(pot_percent_val);
         update_arc(pot_percent_val);
         update_fps();
+    }
+
+    if (lv_screen_active() == ui_Screen2) {
+        if (up_event == BUTTON_CLICK) {
+            // Mover foco para o switch anterior
+            if (current_switch_index > 0) {
+                current_switch_index--;
+                lv_obj_add_state(screen2_switches[current_switch_index], LV_STATE_FOCUSED);
+                if (current_switch_index < 3 - 1) {
+                    lv_obj_clear_state(screen2_switches[current_switch_index + 1], LV_STATE_FOCUSED);
+                }
+            }
+        }
+
+        if (dn_event == BUTTON_CLICK) {
+            // Mover foco para o próximo switch
+            if (current_switch_index  < 2) {
+                // Ajuste conforme o número de switches
+                if (current_switch_index >= 0) {
+                    lv_obj_clear_state(screen2_switches[current_switch_index], LV_STATE_FOCUSED);
+                }
+                current_switch_index++;
+                lv_obj_add_state(screen2_switches[current_switch_index], LV_STATE_FOCUSED);
+            }
+        }
+
+        if (ok_event == BUTTON_CLICK) {
+            // Alternar o estado do switch atual
+            if (current_switch_index >= 0 && current_switch_index < 3) {
+                bool current_state = lv_obj_has_state(screen2_switches[current_switch_index], LV_STATE_CHECKED);
+                if (current_state) {
+                    lv_obj_clear_state(screen2_switches[current_switch_index], LV_STATE_CHECKED);
+                } else {
+                    lv_obj_add_state(screen2_switches[current_switch_index], LV_STATE_CHECKED);
+                }
+            }
+        }
+    }
+
+    if (lv_screen_active() == ui_Screen3) {
+        if (ok_event == BUTTON_PRESS) {
+            lv_obj_add_state(ui_Button1, LV_STATE_PRESSED);
+        } else if (ok_event == BUTTON_NONE && lv_obj_has_state(ui_Button1, LV_STATE_PRESSED)) {
+            lv_obj_clear_state(ui_Button1, LV_STATE_PRESSED);
+        }
     }
 
     lv_timer_handler();

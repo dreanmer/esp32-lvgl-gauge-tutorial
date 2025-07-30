@@ -7,6 +7,7 @@
 enum ButtonEvent {
     BUTTON_NONE,     // Nenhum evento
     BUTTON_PRESS,    // Botão acabou de ser pressionado
+    BUTTON_PRESSED,  // Botão está continuamente pressionado
     BUTTON_CLICK,    // Clique rápido
     BUTTON_HOLD      // Pressionamento longo
 };

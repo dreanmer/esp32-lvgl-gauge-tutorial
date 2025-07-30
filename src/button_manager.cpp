@@ -81,18 +81,19 @@ ButtonEvent ButtonManager::checkEvent(uint8_t pin, unsigned long hold_threshold)
             if (!btn->hold_reported) {
                 btn->hold_reported = true;
                 btn->last_hold_report = millis();
-                Serial.println("primeiro evento de hold");
                 return BUTTON_HOLD;
             }
 
             // Eventos subsequentes de HOLD - a cada intervalo de hold_threshold
             unsigned long now = millis();
             if (now - btn->last_hold_report >= hold_threshold) {
-                Serial.println("subsequente evento de hold");
                 btn->last_hold_report = now;
                 return BUTTON_HOLD;
             }
         }
+
+        // Retorna BUTTON_PRESSED para indicar que o botão continua pressionado
+        return BUTTON_PRESSED;
     }
     // Botão foi solto
     else if (!is_pressed_now && btn->is_pressed) {
