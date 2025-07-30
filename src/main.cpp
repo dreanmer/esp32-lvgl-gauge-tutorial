@@ -2,13 +2,22 @@
 #include <lvgl.h>
 #include <Adafruit_GC9A01A.h>
 #include <ui/ui.h>
+#include "button_manager.h"
 
 #define POT_PIN   A0
 
 // Pinos para o XIAO ESP32C6
-#define TFT_DC    D3
-#define TFT_CS    D4
-#define TFT_RST   D5
+#define TFT_DC    9
+#define TFT_CS    7
+#define TFT_RST   6
+
+// Pinos do painel de controle
+
+#define BT_UP      D2
+#define BT_DN      D5
+#define BT_LT      D4
+#define BT_RT      D1
+#define BT_OK      D3
 
 /*Set to your screen resolution and rotation*/
 #define TFT_HOR_RES   240
@@ -50,10 +59,21 @@ static uint32_t my_tick(void)
     return millis();
 }
 
+uint8_t button_pins[] = {BT_UP, BT_DN, BT_LT, BT_RT, BT_OK};
+ButtonManager button_manager(button_pins, std::size(button_pins));
+
 void setup()
 {
     Serial.begin(115200);
     Serial.println("Setup start");
+
+    pinMode(BT_UP, INPUT_PULLUP);
+    pinMode(BT_DN, INPUT_PULLUP);
+    pinMode(BT_LT, INPUT_PULLUP);
+    pinMode(BT_RT, INPUT_PULLUP);
+    pinMode(BT_OK, INPUT_PULLUP);
+
+    button_manager.begin(true);
 
     tft.begin();
 
@@ -199,11 +219,17 @@ void loop()
     const int pot_val_average = stabilize_pot_reading(pot_val, 10);
     const int pot_percent_val = constrain(map(pot_val_average, 60, 3300, 100, 0), 0, 100);
 
+    // Verificar todos os botões uma única vez por loop
+    ButtonEvent up_event = button_manager.checkEvent(BT_UP);
+    ButtonEvent dn_event = button_manager.checkEvent(BT_DN);
+    ButtonEvent lt_event = button_manager.checkEvent(BT_LT);
+    ButtonEvent rt_event = button_manager.checkEvent(BT_RT);
+    ButtonEvent ok_event = button_manager.checkEvent(BT_OK, 2000);
+
     update_label(pot_percent_val);
     update_arc(pot_percent_val);
+    update_fps();
 
     lv_timer_handler();
-
-    update_fps();
     delay(2);
 }
