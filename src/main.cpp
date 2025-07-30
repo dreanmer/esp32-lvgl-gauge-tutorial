@@ -13,16 +13,16 @@
 
 // Pinos do painel de controle
 
-// #define BT_UP      D2
+#define BT_UP      D7
 #define BT_DN      D5
 #define BT_LT      D4
 #define BT_RT      D9
-// #define BT_OK      D3
+#define BT_OK      D6
 
 /*Set to your screen resolution and rotation*/
 #define TFT_HOR_RES   240
 #define TFT_VER_RES   240
-#define TFT_ROTATION  LV_DISPLAY_ROTATION_0
+#define TFT_ROTATION  2 // 180 graus
 
 #define DEBUG    0
 
@@ -69,6 +69,7 @@ void setup()
     Serial.println("Setup start");
 
     tft.begin();
+    tft.setRotation(TFT_ROTATION);
 
     // pinMode(BT_UP, INPUT_PULLUP);
     pinMode(BT_DN, INPUT_PULLUP);
@@ -105,7 +106,6 @@ void setup()
     lv_display_t* disp = lv_display_create(TFT_HOR_RES, TFT_VER_RES);
     lv_display_set_buffers(disp, draw_buf, NULL, sizeof(draw_buf), LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_flush_cb(disp, gfx_disp_flush);
-    lv_display_set_rotation(disp, TFT_ROTATION);
 
 #if DEBUG != 0
     lv_obj_t* label = lv_label_create(lv_screen_active());
@@ -246,9 +246,12 @@ void loop()
         }
     }
 
-    update_label(pot_percent_val);
-    update_arc(pot_percent_val);
-    update_fps();
+    if (lv_screen_active() == ui_Screen1)
+    {
+        update_label(pot_percent_val);
+        update_arc(pot_percent_val);
+        update_fps();
+    }
 
     lv_timer_handler();
     delay(2);

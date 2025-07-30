@@ -7,10 +7,10 @@
 
 lv_obj_t * ui_Screen2 = NULL;
 lv_obj_t * ui_Switch1 = NULL;
-lv_obj_t * ui_Switch2 = NULL;
-lv_obj_t * ui_Switch3 = NULL;
 lv_obj_t * ui_Label3 = NULL;
+lv_obj_t * ui_Switch2 = NULL;
 lv_obj_t * ui_Label4 = NULL;
+lv_obj_t * ui_Switch3 = NULL;
 lv_obj_t * ui_Label5 = NULL;
 // event funtions
 
@@ -33,6 +33,14 @@ void ui_Screen2_screen_init(void)
     lv_obj_set_style_shadow_width(ui_Switch1, 10, LV_PART_MAIN | LV_STATE_FOCUSED);
     lv_obj_set_style_shadow_spread(ui_Switch1, 2, LV_PART_MAIN | LV_STATE_FOCUSED);
 
+    ui_Label3 = lv_label_create(ui_Screen2);
+    lv_obj_set_width(ui_Label3, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_Label3, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_Label3, 120);
+    lv_obj_set_y(ui_Label3, -30);
+    lv_obj_set_align(ui_Label3, LV_ALIGN_LEFT_MID);
+    lv_label_set_text(ui_Label3, "Switch D1");
+
     ui_Switch2 = lv_switch_create(ui_Screen2);
     lv_obj_set_width(ui_Switch2, 50);
     lv_obj_set_height(ui_Switch2, 25);
@@ -43,6 +51,14 @@ void ui_Screen2_screen_init(void)
     lv_obj_set_style_shadow_opa(ui_Switch2, 255, LV_PART_MAIN | LV_STATE_FOCUSED);
     lv_obj_set_style_shadow_width(ui_Switch2, 10, LV_PART_MAIN | LV_STATE_FOCUSED);
     lv_obj_set_style_shadow_spread(ui_Switch2, 2, LV_PART_MAIN | LV_STATE_FOCUSED);
+
+    ui_Label4 = lv_label_create(ui_Screen2);
+    lv_obj_set_width(ui_Label4, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_Label4, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_Label4, 120);
+    lv_obj_set_y(ui_Label4, 0);
+    lv_obj_set_align(ui_Label4, LV_ALIGN_LEFT_MID);
+    lv_label_set_text(ui_Label4, "Switch D2");
 
     ui_Switch3 = lv_switch_create(ui_Screen2);
     lv_obj_set_width(ui_Switch3, 50);
@@ -55,26 +71,10 @@ void ui_Screen2_screen_init(void)
     lv_obj_set_style_shadow_width(ui_Switch3, 10, LV_PART_MAIN | LV_STATE_FOCUSED);
     lv_obj_set_style_shadow_spread(ui_Switch3, 2, LV_PART_MAIN | LV_STATE_FOCUSED);
 
-    ui_Label3 = lv_label_create(ui_Screen2);
-    lv_obj_set_width(ui_Label3, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_Label3, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Label3, 122);
-    lv_obj_set_y(ui_Label3, -30);
-    lv_obj_set_align(ui_Label3, LV_ALIGN_LEFT_MID);
-    lv_label_set_text(ui_Label3, "Switch D1");
-
-    ui_Label4 = lv_label_create(ui_Screen2);
-    lv_obj_set_width(ui_Label4, LV_SIZE_CONTENT);   /// 1
-    lv_obj_set_height(ui_Label4, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Label4, 122);
-    lv_obj_set_y(ui_Label4, 0);
-    lv_obj_set_align(ui_Label4, LV_ALIGN_LEFT_MID);
-    lv_label_set_text(ui_Label4, "Switch D2");
-
     ui_Label5 = lv_label_create(ui_Screen2);
     lv_obj_set_width(ui_Label5, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Label5, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_Label5, 122);
+    lv_obj_set_x(ui_Label5, 120);
     lv_obj_set_y(ui_Label5, 30);
     lv_obj_set_align(ui_Label5, LV_ALIGN_LEFT_MID);
     lv_label_set_text(ui_Label5, "Switch D3");
@@ -88,10 +88,10 @@ void ui_Screen2_screen_destroy(void)
     // NULL screen variables
     ui_Screen2 = NULL;
     ui_Switch1 = NULL;
-    ui_Switch2 = NULL;
-    ui_Switch3 = NULL;
     ui_Label3 = NULL;
+    ui_Switch2 = NULL;
     ui_Label4 = NULL;
+    ui_Switch3 = NULL;
     ui_Label5 = NULL;
 
 }
