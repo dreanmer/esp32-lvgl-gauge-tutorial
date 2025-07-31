@@ -2,29 +2,18 @@
 #include <lvgl.h>
 #include <Adafruit_GC9A01A.h>
 #include <ui/ui.h>
-#include "button_manager.h"
-
-#define POT_PIN   A0
 
 // Pinos para o XIAO ESP32C6
-#define TFT_DC    D1
-#define TFT_CS    D2
-#define TFT_RST   D3
-
-// Pinos do painel de controle
-
-#define BT_UP      D7
-#define BT_DN      D5
-#define BT_LT      D4
-#define BT_RT      D9
-#define BT_OK      D6
+#define TFT_DC    D6
+#define TFT_CS    D5
+#define TFT_RST   D4
 
 /*Set to your screen resolution and rotation*/
 #define TFT_HOR_RES   240
 #define TFT_VER_RES   240
 #define TFT_ROTATION  2 // 180 graus
 
-#define DEBUG    0
+#define DEBUG    1
 
 // Instância do display
 Adafruit_GC9A01A tft(TFT_CS, TFT_DC, TFT_RST);
@@ -59,21 +48,6 @@ static uint32_t my_tick(void)
     return millis();
 }
 
-uint8_t button_pins[] = {BT_UP, BT_DN, BT_LT, BT_RT, BT_OK};
-ButtonManager button_manager(button_pins, std::size(button_pins));
-
-std::array<lv_obj_t*, 3> screen2_switches = {nullptr, nullptr, nullptr};
-int current_switch_index = 0;
-
-// Esta função deve ser chamada depois que a tela for inicializada
-void initialize_screen2_switches()
-{
-    // Associe os ponteiros já existentes ao array
-    screen2_switches[0] = ui_Switch1;
-    screen2_switches[1] = ui_Switch2;
-    screen2_switches[2] = ui_Switch3;
-}
-
 void setup()
 {
     Serial.begin(115200);
@@ -81,14 +55,6 @@ void setup()
 
     tft.begin();
     tft.setRotation(TFT_ROTATION);
-
-    pinMode(BT_UP, INPUT_PULLUP);
-    pinMode(BT_DN, INPUT_PULLUP);
-    pinMode(BT_LT, INPUT_PULLUP);
-    pinMode(BT_RT, INPUT_PULLUP);
-    pinMode(BT_OK, INPUT_PULLUP);
-
-    button_manager.begin(true);
 
 #if DEBUG != 0
     tft.setRotation(0);
@@ -125,45 +91,10 @@ void setup()
     delay(1000);
 #endif
 
-    pinMode(POT_PIN, INPUT);
-
     ui_init();
-    initialize_screen2_switches();
 
     Serial.println("Setup done");
 }
-
-const int num_readings = 5;
-int previous_values[num_readings] = {};
-int i = 0;
-
-int stabilize_pot_reading(const int new_value, const int hysteresis)
-{
-    static int last_stable_value = 0;
-    static bool first_call = true;
-
-    if (first_call) {
-        last_stable_value = new_value;
-        first_call = false;
-        return new_value;
-    }
-
-    previous_values[i] = new_value;
-    i = (i + 1) % num_readings;
-
-    long sum = 0;
-    for (const int val : previous_values) {
-        sum += val;
-    }
-    int avg = sum / num_readings;
-
-    if (abs(avg - last_stable_value) > hysteresis) {
-        last_stable_value = avg;
-    }
-
-    return last_stable_value;
-}
-
 
 double fps = 0;
 unsigned long last_fps_update = 0;
@@ -222,86 +153,18 @@ void update_fps()
 
 void loop()
 {
-    const int pot_val = analogRead(POT_PIN);
-    const int pot_val_average = stabilize_pot_reading(pot_val, 10);
-    const int pot_percent_val = constrain(map(pot_val_average, 60, 3300, 100, 0), 0, 100);
-
-    // Verificar todos os botões uma única vez por loop
-    ButtonEvent up_event = button_manager.checkEvent(BT_UP);
-    ButtonEvent dn_event = button_manager.checkEvent(BT_DN);
-    ButtonEvent lt_event = button_manager.checkEvent(BT_LT);
-    ButtonEvent rt_event = button_manager.checkEvent(BT_RT);
-    ButtonEvent ok_event = button_manager.checkEvent(BT_OK, 2000);
-
-    // Handle screen navigation with left and right buttons
-    if (lt_event == BUTTON_CLICK) {
-        // Navigate to previous screen
-        if (lv_screen_active() == ui_Screen2) {
-            lv_screen_load(ui_Screen1);
-        } else if (lv_screen_active() == ui_Screen3) {
-            lv_screen_load(ui_Screen2);
-        }
+    static int percent_val = 0;
+    static unsigned long last_update = 0;
+    static unsigned long interval = random(1000, 3000);
+    if (millis() - last_update >= interval) {
+        percent_val = random(0, 101);
+        last_update = millis();
+        interval = random(1000, 3000);
     }
 
-    if (rt_event == BUTTON_CLICK) {
-        // Navigate to next screen
-        if (lv_screen_active() == ui_Screen1) {
-            lv_screen_load(ui_Screen2);
-        } else if (lv_screen_active() == ui_Screen2) {
-            lv_screen_load(ui_Screen3);
-        }
-    }
-
-    if (lv_screen_active() == ui_Screen1) {
-        update_label(pot_percent_val);
-        update_arc(pot_percent_val);
-        update_fps();
-    }
-
-    if (lv_screen_active() == ui_Screen2) {
-        if (up_event == BUTTON_CLICK) {
-            // Mover foco para o switch anterior
-            if (current_switch_index > 0) {
-                current_switch_index--;
-                lv_obj_add_state(screen2_switches[current_switch_index], LV_STATE_FOCUSED);
-                if (current_switch_index < 3 - 1) {
-                    lv_obj_clear_state(screen2_switches[current_switch_index + 1], LV_STATE_FOCUSED);
-                }
-            }
-        }
-
-        if (dn_event == BUTTON_CLICK) {
-            // Mover foco para o próximo switch
-            if (current_switch_index  < 2) {
-                // Ajuste conforme o número de switches
-                if (current_switch_index >= 0) {
-                    lv_obj_clear_state(screen2_switches[current_switch_index], LV_STATE_FOCUSED);
-                }
-                current_switch_index++;
-                lv_obj_add_state(screen2_switches[current_switch_index], LV_STATE_FOCUSED);
-            }
-        }
-
-        if (ok_event == BUTTON_CLICK) {
-            // Alternar o estado do switch atual
-            if (current_switch_index >= 0 && current_switch_index < 3) {
-                bool current_state = lv_obj_has_state(screen2_switches[current_switch_index], LV_STATE_CHECKED);
-                if (current_state) {
-                    lv_obj_clear_state(screen2_switches[current_switch_index], LV_STATE_CHECKED);
-                } else {
-                    lv_obj_add_state(screen2_switches[current_switch_index], LV_STATE_CHECKED);
-                }
-            }
-        }
-    }
-
-    if (lv_screen_active() == ui_Screen3) {
-        if (ok_event == BUTTON_PRESS) {
-            lv_obj_add_state(ui_Button1, LV_STATE_PRESSED);
-        } else if (ok_event == BUTTON_NONE && lv_obj_has_state(ui_Button1, LV_STATE_PRESSED)) {
-            lv_obj_clear_state(ui_Button1, LV_STATE_PRESSED);
-        }
-    }
+    update_label(percent_val);
+    update_arc(percent_val);
+    update_fps();
 
     lv_timer_handler();
     delay(2);
