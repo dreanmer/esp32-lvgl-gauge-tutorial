@@ -153,17 +153,34 @@ void update_fps()
 
 void loop()
 {
-    static int percent_val = 0;
+    static int current_percent_val = 0;
+    static int target_percent_val = 0;
     static unsigned long last_update = 0;
     static unsigned long interval = random(1000, 3000);
+    static unsigned long last_animation_step = 0;
+    static const unsigned long ANIMATION_STEP_MS = 16; // approximately 60fps
+
+    // Time to choose a new target value
     if (millis() - last_update >= interval) {
-        percent_val = random(0, 101);
+        target_percent_val = random(0, 101);
         last_update = millis();
         interval = random(1000, 3000);
     }
 
-    update_label(percent_val);
-    update_arc(percent_val);
+    // Smoothly animate from current to target
+    if (millis() - last_animation_step >= ANIMATION_STEP_MS) {
+        last_animation_step = millis();
+
+        if (current_percent_val < target_percent_val) {
+            current_percent_val++;
+        } else if (current_percent_val > target_percent_val) {
+            current_percent_val--;
+        }
+
+        update_label(current_percent_val);
+        update_arc(current_percent_val);
+    }
+
     update_fps();
 
     lv_timer_handler();
